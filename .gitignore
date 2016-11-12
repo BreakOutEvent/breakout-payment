@@ -1,0 +1,27 @@
+*.class
+*.log
+.DS_Store
+
+tempdata/*
+!tempdata/empty
+
+# sbt specific
+.cache/
+.history/
+.lib/
+dist/*
+target/
+
+# emacs files
+.ensime
+.ensime_cache/
+
+# JetBrains IDE
+.idea/
+*.iml
+
+# Eclipse / Scala-IDE
+.classpath
+.project
+.settings/
+.cache-main
