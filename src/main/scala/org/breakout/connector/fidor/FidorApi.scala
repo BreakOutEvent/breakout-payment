@@ -28,7 +28,7 @@ object FidorRoutes {
   private val baseUrl = config.getString("fidor.url")
 
   val USERS_CURRENT = FidorRoute(s"$baseUrl/users/current")
-  val TRANSACTIONS = FidorRoute(s"$baseUrl/transactions")
+  val TRANSACTIONS = FidorRoute(s"$baseUrl/transactions?per_page=100")
 }
 
 
@@ -56,9 +56,20 @@ object FidorApi {
     pipeline(Get(USERS_CURRENT.url))
   }
 
-  // TODO implement pagination or limit by date
-  def getTransactions: Future[FidorTransactions] = {
+  def getTransactions(page: Int): Future[FidorTransactions] = {
     val pipeline = fidorPipeline ~> unmarshal[FidorTransactions]
-    pipeline(Get(TRANSACTIONS.url))
+    pipeline(Get(s"${TRANSACTIONS.url}&page=$page"))
+  }
+
+  def getAllTransactions: Future[Seq[FidorTransaction]] = {
+    getTransactions(1) flatMap { transactions =>
+      val allPages = transactions.collection.total_pages
+
+      Future.sequence((2 to allPages).map { page =>
+        getTransactions(page)
+      }) flatMap { transactionsList =>
+        Future.successful(transactions.data ++ transactionsList.flatten(_.data))
+      }
+    }
   }
 }

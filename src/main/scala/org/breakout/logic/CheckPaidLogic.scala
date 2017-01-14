@@ -15,10 +15,9 @@ object CheckPaidLogic {
   def doPaidCheck(cmdConfig: CmdConfig) = {
     log.info(s"Start doPaidCheck ${cmdConfig.dryRun.name}")
 
-    FidorApi.getTransactions onComplete {
+    FidorApi.getAllTransactions onComplete {
       case Success(transactions) =>
-        log.debug(s"Got ${transactions.collection} page")
-        log.debug(s"Got ${transactions.data.size} transactions")
+        log.debug(s"Got ${transactions.size} transactions")
         System.exit(1)
       case Failure(e) => e.printStackTrace()
     }
