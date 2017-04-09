@@ -2,6 +2,7 @@ package org.breakout.connector.fidor
 
 import akka.actor.ActorSystem
 import com.typesafe.config.ConfigFactory
+import com.typesafe.scalalogging.Logger
 import org.breakout.connector.HttpConnection._
 import org.breakout.connector.fidor.FidorRoutes._
 import spray.client.pipelining._
@@ -34,6 +35,7 @@ object FidorRoutes {
 
 object FidorApi {
 
+  private val log = Logger[FidorApi.type]
   private val config = ConfigFactory.load()
   private val fidorToken = config.getString("fidor.token")
 
@@ -52,16 +54,19 @@ object FidorApi {
     )
 
   def getUser: Future[FidorUser] = {
+    log.debug("getting fidor user")
     val pipeline = fidorPipeline ~> unmarshal[FidorUser]
     pipeline(Get(USERS_CURRENT.url))
   }
 
   def getTransactions(page: Int): Future[FidorTransactions] = {
     val pipeline = fidorPipeline ~> unmarshal[FidorTransactions]
+    log.debug(s"getting fidor transactions page $page")
     pipeline(Get(s"${TRANSACTIONS.url}&page=$page"))
   }
 
   def getAllTransactions: Future[Seq[FidorTransaction]] = {
+    log.debug("getting all fidor transactions")
     getTransactions(1) flatMap { transactions =>
       val allPages = transactions.collection.total_pages
 
