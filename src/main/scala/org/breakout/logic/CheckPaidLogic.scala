@@ -24,7 +24,7 @@ object CheckPaidLogic {
         log.debug(s"Got ${withCorrectSubject.size} transactions, with correct subject")
 
         withCorrectSubject.foreach { transaction =>
-          log.info(s"received ${transaction.amount.toDecimalAmount}€ with ${transaction.subject.getSubjectCode} as id  ${transaction.id} ")
+          log.info(s"received ${transaction.amount.toDecimalAmount}€ with ${transaction.subject.getSubjectCode} as id ${transaction.id} ")
         }
 
         System.exit(1)

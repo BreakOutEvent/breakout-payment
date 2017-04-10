@@ -40,3 +40,8 @@ case class FidorCollection(total_pages: Int,
 
 case class FidorTransactions(data: Seq[FidorTransaction],
                              collection: FidorCollection)
+
+case class FidorAuthTokens(access_token: String,
+                           token_type: String,
+                           state: String,
+                           refresh_token: String)

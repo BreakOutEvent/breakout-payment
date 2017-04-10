@@ -1,10 +1,10 @@
 package org.breakout
 
-import scopt.OptionParser
 import com.typesafe.config.ConfigFactory
 import org.breakout.DryRunOption.NO_DRY_RUN
 import org.breakout.Modes._
 import org.breakout.logic.CheckPaidLogic
+import scopt.OptionParser
 
 object Main extends App {
 
@@ -20,11 +20,10 @@ object Main extends App {
 
     note("")
 
-    cmd("checkPaid")
+    cmd(CHECK_PAID.value)
       .action((_, c) => c.copy(mode = CHECK_PAID))
-      .text("checkPaid checks weather payments the backend expects were received.")
+      .text("checks weather payments the backend expects were received.")
   }
-
 
   parser.parse(args, CmdConfig()) match {
     case Some(cmdConfig) =>
