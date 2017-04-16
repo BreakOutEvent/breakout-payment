@@ -2,11 +2,13 @@ package org.breakout.logic
 
 import com.typesafe.scalalogging.Logger
 import org.breakout.CmdConfig
+import org.breakout.connector.backend.{BackendApi, BackendPayment}
 import org.breakout.connector.fidor.FidorApi
 import org.breakout.util.IntUtils._
 import org.breakout.util.StringUtils._
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 import scala.util.{Failure, Success}
 
 
@@ -23,11 +25,17 @@ object CheckPaidLogic {
 
         log.debug(s"Got ${withCorrectSubject.size} transactions, with correct subject")
 
-        withCorrectSubject.foreach { transaction =>
+        Future.sequence(withCorrectSubject.map { transaction =>
           log.info(s"received ${transaction.amount.toDecimalAmount}€ with ${transaction.subject.getSubjectCode} as id ${transaction.id} ")
+          BackendApi.addPayment(
+            transaction.subject.getSubjectCode,
+            BackendPayment(transaction.amount.toDecimalAmount, transaction.id.toLong)
+          ) map { invoice =>
+            log.info(s"SUCCESS: inserted payment to backend invoice $invoice")
+          }
+        }) onComplete { _ =>
+          System.exit(1)
         }
-
-        System.exit(1)
 
       case Failure(e) => e.printStackTrace()
     }
