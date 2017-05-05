@@ -34,7 +34,7 @@ case class FidorTransactionTypeDetails(sepa_credit_transfer_id: Option[String],
 
 case class FidorCollection(total_pages: Int,
                            current_page: Int,
-                           current_entries: Int,
+                           current_entries: Option[Int],
                            per_page: Int,
                            total_entries: Int)
 

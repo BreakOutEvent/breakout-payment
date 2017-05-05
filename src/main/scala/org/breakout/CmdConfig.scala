@@ -14,9 +14,9 @@ object Modes {
 }
 
 
-case class DryRun(value: Boolean, name: String)
+case class DryRun(enabled: Boolean, name: String)
 
 object DryRunOption {
-  val DRY_RUN = DryRun(value = true, "WITH DRY-RUN")
-  val NO_DRY_RUN = DryRun(value = false, "WITHOUT DRY-RUN")
+  val DRY_RUN = DryRun(enabled = true, "WITH DRY-RUN")
+  val NO_DRY_RUN = DryRun(enabled = false, "WITHOUT DRY-RUN")
 }

@@ -30,22 +30,23 @@ case class FidorRoute(url: String)
 object FidorRoutes {
 
   private val config = ConfigFactory.load()
-  private val baseUrl = config.getString("fidor.url")
+  private val fidorApiUrl = config.getString("fidor.apiUrl")
+  private val fidorApmUrl = config.getString("fidor.apmUrl")
   private val redirectUrl = config.getString("fidor.redirectUrl")
   private val redirectPort = config.getInt("fidor.redirectPort")
 
-  val USERS_CURRENT = FidorRoute(s"$baseUrl/users/current")
+  val USERS_CURRENT = FidorRoute(s"$fidorApiUrl/users/current")
 
-  def TRANSACTIONS(page: Int) = FidorRoute(s"$baseUrl/transactions?per_page=100&page=$page")
+  def TRANSACTIONS(page: Int) = FidorRoute(s"$fidorApiUrl/transactions?per_page=100&page=$page")
 
   def AUTHORIZE(clientId: String): FidorRoute = {
     val state = UUID.randomUUID().toString
     val redirectUri = URLEncoder.encode(s"http://$redirectUrl:$redirectPort/", "UTF-8")
-    FidorRoute(s"$baseUrl/oauth/authorize?client_id=$clientId&response_type=code&redirect_uri=$redirectUri&state=$state")
+    FidorRoute(s"$fidorApmUrl/oauth/authorize?client_id=$clientId&response_type=code&redirect_uri=$redirectUri&state=$state")
   }
 
   val TOKEN: FidorRoute = {
-    FidorRoute(s"$baseUrl/oauth/token")
+    FidorRoute(s"$fidorApmUrl/oauth/token")
   }
 
 }
@@ -81,6 +82,7 @@ object FidorApi {
       // ~> logReq
       ~> sendReceive
       //~> logResp
+      ~> fixLocationHeader
       ~> setContentType(MediaTypes.`application/json`)
     )
 

@@ -27,11 +27,17 @@ object CheckPaidLogic {
 
         Future.sequence(withCorrectSubject.map { transaction =>
           log.info(s"received ${transaction.amount.toDecimalAmount}€ with ${transaction.subject.getSubjectCode} as id ${transaction.id} ")
-          BackendApi.addPayment(
-            transaction.subject.getSubjectCode,
-            BackendPayment(transaction.amount.toDecimalAmount, transaction.id.toLong)
-          ) map { invoice =>
-            log.info(s"SUCCESS: inserted payment to backend invoice $invoice")
+
+          if (!cmdConfig.dryRun.enabled) {
+            BackendApi.addPayment(
+              transaction.subject.getSubjectCode,
+              BackendPayment(transaction.amount.toDecimalAmount, transaction.id.toLong)
+            ) map { invoice =>
+              log.info(s"SUCCESS: inserted payment to backend invoice $invoice")
+            }
+          } else {
+            log.info("Won't insert payments to backend due to dry-running")
+            Future.successful()
           }
         }) onComplete { _ =>
           System.exit(1)

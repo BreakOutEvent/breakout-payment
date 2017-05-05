@@ -33,9 +33,9 @@ object StringUtils {
   }
 
   private def getSubjectGroups(subject: String): Option[(String, String)] = {
-    val pattern = """^([A-Z0-9]{4})([A-Z0-9]{2})-""".r
+    val pattern = """([A-Z0-9]{4})([A-Z0-9]{2})-""".r
 
-    val matchedString = pattern.findAllIn(subject)
+    val matchedString = pattern.findAllIn(subject.toUpperCase())
     matchedString.isEmpty match {
       case true => None
       case false =>

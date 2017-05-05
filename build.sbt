@@ -1,7 +1,7 @@
 
 name := "breakout-payment"
 organization := "org.breakout"
-version := "1.0.0"
+version := "1.0.1"
 mainClass := Some("org.breakout.Main")
 scalaVersion := "2.11.8"
 
