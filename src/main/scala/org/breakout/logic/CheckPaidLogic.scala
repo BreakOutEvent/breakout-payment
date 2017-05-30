@@ -36,7 +36,7 @@ object CheckPaidLogic {
             ) map { invoice =>
               log.info(s"SUCCESS: inserted payment to backend invoice $invoice")
             } recover { case _: Throwable =>
-              log.error(s"backend rejected, maybe already inserted: ${transaction.amount.toDecimalAmount}€ as ${transaction.subject} on ${transaction.value_date.get}; fidor id: ${transaction.id}")
+              log.error(s"backend rejected, maybe already inserted: ${transaction.amount.toDecimalAmount}€ as ${transaction.subject} from ${transaction.transaction_type_details.remote_name} (${transaction.transaction_type_details.remote_iban}) on ${transaction.value_date.get}; fidor id: ${transaction.id}")
             }
           } else {
             log.info("Won't insert payments to backend due to dry-running")
@@ -44,7 +44,7 @@ object CheckPaidLogic {
           }
         }) onComplete { _ =>
           withoutCorrectSubject.foreach { t =>
-            log.error(s"subject is not matching for: ${t.amount.toDecimalAmount}€ as ${t.subject} on ${t.value_date.get}; fidor id: ${t.id}")
+            log.error(s"subject is not matching for: ${t.amount.toDecimalAmount}€ as ${t.subject} from ${t.transaction_type_details.remote_name.get} (${t.transaction_type_details.remote_iban.get}) on ${t.value_date.get}; fidor id: ${t.id}")
           }
           System.exit(1)
         }
