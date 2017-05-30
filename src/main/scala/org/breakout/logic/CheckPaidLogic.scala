@@ -22,11 +22,12 @@ object CheckPaidLogic {
     FidorApi.getAllTransactions onComplete {
       case Success(transactions) =>
         val withCorrectSubject = transactions.filter(_.subject.hasValidSubject)
+        val withoutCorrectSubject = transactions.filter(t => !withCorrectSubject.contains(t))
 
         log.debug(s"Got ${withCorrectSubject.size} transactions, with correct subject")
 
         Future.sequence(withCorrectSubject.map { transaction =>
-          log.info(s"received ${transaction.amount.toDecimalAmount}€ with ${transaction.subject.getSubjectCode} as id ${transaction.id} ")
+          log.debug(s"received ${transaction.amount.toDecimalAmount}€ with ${transaction.subject.getSubjectCode} as id ${transaction.id} ")
 
           if (!cmdConfig.dryRun.enabled) {
             BackendApi.addPayment(
@@ -34,12 +35,17 @@ object CheckPaidLogic {
               BackendPayment(transaction.amount.toDecimalAmount, transaction.id.toLong)
             ) map { invoice =>
               log.info(s"SUCCESS: inserted payment to backend invoice $invoice")
+            } recover { case _: Throwable =>
+              log.error(s"backend rejected, maybe already inserted: ${transaction.amount.toDecimalAmount}€ as ${transaction.subject} on ${transaction.value_date.get}; fidor id: ${transaction.id}")
             }
           } else {
             log.info("Won't insert payments to backend due to dry-running")
             Future.successful()
           }
         }) onComplete { _ =>
+          withoutCorrectSubject.foreach { t =>
+            log.error(s"subject is not matching for: ${t.amount.toDecimalAmount}€ as ${t.subject} on ${t.value_date.get}; fidor id: ${t.id}")
+          }
           System.exit(1)
         }
 
