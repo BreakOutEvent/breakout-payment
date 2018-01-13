@@ -1,14 +1,26 @@
 package org.breakout
 
+import akka.actor.ActorSystem
 import com.typesafe.config.ConfigFactory
+import com.typesafe.scalalogging.Logger
 import org.breakout.DryRunOption.NO_DRY_RUN
 import org.breakout.Modes._
+import org.breakout.http.Frontend
 import org.breakout.logic.CheckPaidLogic
 import scopt.OptionParser
 
 object Main extends App {
 
-  val config = ConfigFactory.load()
+
+  val system = ActorSystem("web-frontend")
+
+  import system.dispatcher
+
+  Frontend.runWebServer()
+
+  //CheckPaidLogic.doPaidCheck(CmdConfig(CHECK_PAID, NO_DRY_RUN))
+
+  /*val config = ConfigFactory.load()
 
   val parser = new OptionParser[CmdConfig]("breakout-payment") {
     head(config.getString("name"), config.getString("version"))
@@ -33,5 +45,5 @@ object Main extends App {
         case notImplementedMode => throw new RuntimeException(s"$notImplementedMode is not implemented yet!")
       }
     case None =>
-  }
+  }*/
 }

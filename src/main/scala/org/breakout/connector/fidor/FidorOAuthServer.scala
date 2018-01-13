@@ -40,7 +40,7 @@ object FidorOAuthServer {
     val oAuthServer = webServer().run
 
 
-    val system = ActorSystem("fidorCallbackAwait")
+    val system = ActorSystem("fidor-callback-await")
     import system.dispatcher
 
     val promise = Promise[String]
