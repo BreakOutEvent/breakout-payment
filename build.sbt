@@ -7,13 +7,13 @@ scalaVersion := "2.11.8"
 
 libraryDependencies ++= {
 
-  val scoptVersion = "3.5.0"
-  val sprayVersion = "1.3.3"
-  val logBackVersion = "1.1.7"
-  val scalaLoggingVersion = "3.5.0"
-  val configVersion = "1.3.1"
-  val akkaVersion = "2.4.17"
-  val http4sVersion = "0.15.8"
+  val scoptVersion = "3.7.0"
+  val sprayVersion = "1.3.4"
+  val logBackVersion = "1.2.3"
+  val scalaLoggingVersion = "3.7.2"
+  val configVersion = "1.3.2"
+  val akkaVersion = "2.5.9"
+  val http4sVersion = "0.17.6"
 
   Seq(
     "com.github.scopt"            %% "scopt"               % scoptVersion,
