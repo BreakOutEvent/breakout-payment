@@ -1,11 +1,9 @@
 package org.breakout.connector.fidor
 
-import java.net.URLEncoder
-import java.util.UUID
-
 import akka.actor.ActorSystem
 import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.Logger
+import org.breakout.UsageEnvironment
 import org.breakout.connector.HttpConnection._
 import org.breakout.connector.fidor.FidorRoutes._
 import spray.client.pipelining._
@@ -32,35 +30,25 @@ object FidorRoutes {
   private val config = ConfigFactory.load()
   private val fidorApiUrl = config.getString("fidor.apiUrl")
   private val fidorApmUrl = config.getString("fidor.apmUrl")
-  private val redirectUrl = config.getString("fidor.redirectUrl")
-  private val redirectPort = config.getInt("fidor.redirectPort")
 
   val USERS_CURRENT = FidorRoute(s"$fidorApiUrl/users/current")
 
   def TRANSACTIONS(page: Int) = FidorRoute(s"$fidorApiUrl/transactions?per_page=100&page=$page")
 
-  def AUTHORIZE(clientId: String): FidorRoute = {
-    val state = UUID.randomUUID().toString
-    val redirectUri = URLEncoder.encode(s"http://$redirectUrl:$redirectPort/", "UTF-8")
-    FidorRoute(s"$fidorApmUrl/oauth/authorize?client_id=$clientId&response_type=code&redirect_uri=$redirectUri&state=$state")
-  }
+  def AUTHORIZE(clientId: String): FidorRoute = FidorRoute(FidorOAuthServer.fidorOAuthRoute(clientId))
 
-  val TOKEN: FidorRoute = {
-    FidorRoute(s"$fidorApmUrl/oauth/token")
-  }
+  val TOKEN: FidorRoute = FidorRoute(s"$fidorApmUrl/oauth/token")
 
 }
 
 
-object FidorApi {
+class FidorApi(usageEnvironment: UsageEnvironment) {
 
-  private val log = Logger[FidorApi.type]
+  private val log = Logger[FidorApi]
   private val config = ConfigFactory.load()
   private var fidorTokenOption: Option[String] = None
   private val clientId = config.getString("fidor.clientId")
   private val clientSecret = config.getString("fidor.clientSecret")
-  private val redirectUrl = config.getString("fidor.redirectUrl")
-  private val redirectPort = config.getInt("fidor.redirectPort")
 
   private implicit val system = ActorSystem()
 
@@ -127,13 +115,13 @@ object FidorApi {
 
   private def authorizeFidor(): Future[FidorAuthTokens] = {
     log.info(s"authorize with fidor: ${AUTHORIZE(clientId).url}")
-    FidorOAuthServer.fetchApiCode() flatMap { apiCode =>
+    FidorOAuthServer.fetchApiCode(usageEnvironment) flatMap { apiCode =>
       val pipeline = basicFidorPipeline ~> unmarshal[FidorAuthTokens]
 
       pipeline(Post(TOKEN.url, FormData(Seq(
         "grant_type" -> "authorization_code",
         "code" -> apiCode,
-        "redirect_uri" -> s"http://$redirectUrl:$redirectPort/",
+        "redirect_uri" -> FidorOAuthServer.redirectUri,
         "client_id" -> clientId))
       ))
     }

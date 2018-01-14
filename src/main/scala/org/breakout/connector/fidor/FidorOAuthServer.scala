@@ -1,10 +1,16 @@
 package org.breakout.connector.fidor
 
+import java.net.URLEncoder
+import java.util.UUID
+
 import akka.actor.ActorSystem
 import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.Logger
+import org.breakout.UsageEnvironment
+import org.breakout.UsageEnvironment._
 import org.http4s.HttpService
 import org.http4s.dsl.{Root, _}
+import org.http4s.server.Server
 import org.http4s.server.blaze._
 
 import scala.concurrent.duration._
@@ -14,11 +20,23 @@ object FidorOAuthServer {
 
   private val log = Logger[FidorOAuthServer.type]
   private var apiCodeOption: Option[String] = None
+
   private val config = ConfigFactory.load()
+  private val fidorApmUrl = config.getString("fidor.apmUrl")
   private val redirectUrl = config.getString("fidor.redirectUrl")
   private val redirectPort = config.getInt("fidor.redirectPort")
 
-  private val service = HttpService {
+  val redirectRoute = "/auth/"
+  val redirectUri = s"http://$redirectUrl:$redirectPort$redirectRoute"
+
+  def fidorOAuthRoute(clientId: String): String = {
+    val state = UUID.randomUUID().toString
+    val urlEncoded = URLEncoder.encode(FidorOAuthServer.redirectUri, "UTF-8")
+
+    s"$fidorApmUrl/oauth/authorize?client_id=$clientId&response_type=code&redirect_uri=$urlEncoded&state=$state"
+  }
+
+  val oauthService = HttpService {
     case req@GET -> Root =>
 
       apiCodeOption = req.uri.query.toMap.get("code").flatten
@@ -32,13 +50,11 @@ object FidorOAuthServer {
       }
   }
 
-  private def webServer(): BlazeBuilder = BlazeBuilder
-    .bindHttp(redirectPort, redirectUrl)
-    .mountService(service, "/")
-
-  def fetchApiCode(): Future[String] = {
-    val oAuthServer = webServer().run
-
+  def fetchApiCode(usageEnvironment: UsageEnvironment): Future[String] = {
+    val oAuthServer: Option[Server] = usageEnvironment match {
+      case WEB_FRONTEND => None
+      case CLI => Some(BlazeBuilder.bindHttp(redirectPort, redirectUrl).mountService(oauthService, redirectRoute).run)
+    }
 
     val system = ActorSystem("fidor-callback-await")
     import system.dispatcher
@@ -59,7 +75,7 @@ object FidorOAuthServer {
     promise.future.map { result =>
       cancellable.cancel()
       system.terminate()
-      oAuthServer.shutdownNow()
+      oAuthServer.foreach(_.shutdownNow())
       result
     }
   }

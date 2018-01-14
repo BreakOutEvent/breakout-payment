@@ -5,6 +5,7 @@ import java.net.URI
 
 import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.Logger
+import org.breakout.connector.fidor.FidorOAuthServer
 import org.http4s.dsl.{->, GET, Ok, Root, _}
 import org.http4s.server.Server
 import org.http4s.server.blaze.BlazeBuilder
@@ -19,19 +20,19 @@ object Frontend {
   private val config = ConfigFactory.load()
   private val url = config.getString("fidor.redirectUrl")
   private val port = config.getInt("fidor.redirectPort")
-
+  private val clientId = config.getString("fidor.clientId")
 
   val htmlWrapper: Text.TypedTag[String] = html(
     head(title := "BreakOut Fidor Payment"),
     body(
       div(
         h1(id := "title", "BreakOut Fidor Payment"),
-        a(href := "authorize", "Fidor Zugriff authorisieren")
+        a(href := FidorOAuthServer.fidorOAuthRoute(clientId), "Fidor Zugriff authorisieren")
       )
     )
   )
 
-  private val service = HttpService {
+  private val frontendService = HttpService {
     case GET -> Root => Ok(htmlWrapper.render).putHeaders(Header("Content-Type", "text/html; charset=UTF-8"))
   }
 
@@ -48,6 +49,10 @@ object Frontend {
 
     openBrowser(uri)
 
-    BlazeBuilder.bindHttp(port, url).mountService(service, "/").run
+    BlazeBuilder
+      .bindHttp(port, url)
+      .mountService(frontendService, "/")
+      .mountService(FidorOAuthServer.oauthService, FidorOAuthServer.redirectRoute)
+      .run
   }
 }
