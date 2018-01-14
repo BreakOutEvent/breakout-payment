@@ -8,7 +8,7 @@ import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.Logger
 import org.breakout.UsageEnvironment
 import org.breakout.UsageEnvironment._
-import org.http4s.HttpService
+import org.http4s.{Header, HttpService}
 import org.http4s.dsl.{Root, _}
 import org.http4s.server.Server
 import org.http4s.server.blaze._
@@ -36,14 +36,21 @@ object FidorOAuthServer {
     s"$fidorApmUrl/oauth/authorize?client_id=$clientId&response_type=code&redirect_uri=$urlEncoded&state=$state"
   }
 
-  val oauthService = HttpService {
+  def oauthService(usageEnvironment: UsageEnvironment) = HttpService {
     case req@GET -> Root =>
 
       apiCodeOption = req.uri.query.toMap.get("code").flatten
 
       apiCodeOption match {
         case Some(_) =>
-          Ok().withBody("all ok, this can be closed")
+          usageEnvironment match {
+            case WEB_FRONTEND =>
+              Ok("<script>window.location.href = '/transactions';</script>")
+                .putHeaders(Header("Content-Type", "text/html; charset=UTF-8"))
+            case CLI =>
+              Ok("<script>window.close();</script>")
+                .putHeaders(Header("Content-Type", "text/html; charset=UTF-8"))
+          }
         case None =>
           log.info("didn't get code")
           BadRequest().withBody("didn't get code")
@@ -53,7 +60,7 @@ object FidorOAuthServer {
   def fetchApiCode(usageEnvironment: UsageEnvironment): Future[String] = {
     val oAuthServer: Option[Server] = usageEnvironment match {
       case WEB_FRONTEND => None
-      case CLI => Some(BlazeBuilder.bindHttp(redirectPort, redirectUrl).mountService(oauthService, redirectRoute).run)
+      case CLI => Some(BlazeBuilder.bindHttp(redirectPort, redirectUrl).mountService(oauthService(usageEnvironment), redirectRoute).run)
     }
 
     val system = ActorSystem("fidor-callback-await")

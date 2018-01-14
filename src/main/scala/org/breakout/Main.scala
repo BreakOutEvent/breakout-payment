@@ -37,6 +37,7 @@ object Main extends App {
     ActorSystem("web-frontend")
 
     Frontend.runWebServer()
-    CheckPaidLogic.doPaidCheck(CmdConfig(CHECK_PAID, NO_DRY_RUN, WEB_FRONTEND))
+
+
   }
 }

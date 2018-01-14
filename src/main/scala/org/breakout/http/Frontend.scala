@@ -5,14 +5,17 @@ import java.net.URI
 
 import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.Logger
-import org.breakout.connector.fidor.FidorOAuthServer
+import org.breakout.UsageEnvironment._
+import org.breakout.connector.fidor.{FidorApi, FidorOAuthServer, FidorTransaction}
+import org.http4s._
 import org.http4s.dsl.{->, GET, Ok, Root, _}
 import org.http4s.server.Server
 import org.http4s.server.blaze.BlazeBuilder
-import org.http4s.{Header, HttpService}
 
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 import scalatags.Text
-import scalatags.Text.all._
+
 
 object Frontend {
 
@@ -21,19 +24,20 @@ object Frontend {
   private val url = config.getString("fidor.redirectUrl")
   private val port = config.getInt("fidor.redirectPort")
   private val clientId = config.getString("fidor.clientId")
+  val fidorApi = new FidorApi(WEB_FRONTEND)
 
-  val htmlWrapper: Text.TypedTag[String] = html(
-    head(title := "BreakOut Fidor Payment"),
-    body(
-      div(
-        h1(id := "title", "BreakOut Fidor Payment"),
-        a(href := FidorOAuthServer.fidorOAuthRoute(clientId), "Fidor Zugriff authorisieren")
-      )
-    )
-  )
+  def transactions: Future[Text.TypedTag[String]] =
+    fidorApi.getAllTransactions.map { transactions: Seq[FidorTransaction] =>
+      Html.htmlWrapper(Html.transactionsPage(transactions))
+    }
 
   private val frontendService = HttpService {
-    case GET -> Root => Ok(htmlWrapper.render).putHeaders(Header("Content-Type", "text/html; charset=UTF-8"))
+    case GET -> Root => Ok(Html.htmlWrapper(Html.authorizePage(FidorOAuthServer.fidorOAuthRoute(clientId))).render)
+      .putHeaders(Header("Content-Type", "text/html; charset=UTF-8"))
+
+    case GET -> Root / "transactions" => Ok(transactions.map(_.render))
+      .putHeaders(Header("Content-Type", "text/html; charset=UTF-8"))
+
   }
 
   private def openBrowser(uri: String) =
@@ -52,7 +56,7 @@ object Frontend {
     BlazeBuilder
       .bindHttp(port, url)
       .mountService(frontendService, "/")
-      .mountService(FidorOAuthServer.oauthService, FidorOAuthServer.redirectRoute)
+      .mountService(FidorOAuthServer.oauthService(WEB_FRONTEND), FidorOAuthServer.redirectRoute)
       .run
   }
 }
