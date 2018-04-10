@@ -1,33 +1,11 @@
-package org.breakout.http
+package org.breakout.http.html
 
 import org.breakout.connector.fidor.FidorTransaction
 import org.breakout.util.StringUtils._
 import scalatags.Text
-import scalatags.Text.all.{paddingLeft, span, _}
-import scalatags.stylesheet._
+import scalatags.Text.all.{span, _}
 
 object Html {
-
-  object Style extends StyleSheet {
-    initStyleSheet()
-
-    val valid = cls(
-      color := "green"
-    )
-    val invalid = cls(
-      color := "red"
-    )
-    val fidorId = cls(
-      color := "#c6c6c6",
-      paddingLeft := "10px"
-    )
-    val subject = cls(
-      paddingLeft := "10px"
-    )
-    val date = cls(
-      color := "#000"
-    )
-  }
 
   def htmlWrapper(content: Text.TypedTag[String]): Text.TypedTag[String] =
     html(
@@ -58,6 +36,7 @@ object Html {
       div(cls := Style.valid.name, "Code gültig"),
       div(cls := Style.invalid.name, "Code ungültig"),
       h2("Transaktionen:"),
+      a(cls := Style.backend.name, href := "/transfer", "Gültige an Backend übertragen"),
       ul(
         transactions.map(transaction => li(
           cls := transactionClass(transaction).name,
