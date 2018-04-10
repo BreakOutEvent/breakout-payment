@@ -2,9 +2,8 @@ package org.breakout.http
 
 import org.breakout.connector.fidor.FidorTransaction
 import org.breakout.util.StringUtils._
-
 import scalatags.Text
-import scalatags.Text.all._
+import scalatags.Text.all.{paddingLeft, span, _}
 import scalatags.stylesheet._
 
 object Html {
@@ -17,6 +16,16 @@ object Html {
     )
     val invalid = cls(
       color := "red"
+    )
+    val fidorId = cls(
+      color := "#c6c6c6",
+      paddingLeft := "10px"
+    )
+    val subject = cls(
+      paddingLeft := "10px"
+    )
+    val date = cls(
+      color := "#000"
     )
   }
 
@@ -45,11 +54,16 @@ object Html {
     }
 
     div(
-      h2("Transaktionen"),
+      h2("Legende:"),
+      div(cls := Style.valid.name, "Code gültig"),
+      div(cls := Style.invalid.name, "Code ungültig"),
+      h2("Transaktionen:"),
       ul(
         transactions.map(transaction => li(
           cls := transactionClass(transaction).name,
-          transaction.subject
+          span(cls := Style.date.name, transaction.value_date.getOrElse("").toString),
+          span(cls := Style.subject.name, transaction.subject),
+          span(cls := Style.fidorId.name, s"(${transaction.id})")
         ))
       )
     )
