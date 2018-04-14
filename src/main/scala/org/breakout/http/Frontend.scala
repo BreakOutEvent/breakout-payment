@@ -78,7 +78,7 @@ object Frontend {
     val uri = s"http://$url:$port/"
     log.info(s"Frontend running: $uri")
 
-    openBrowser(uri)
+    //openBrowser(uri)
 
     BlazeBuilder
       .bindHttp(port, url)
