@@ -13,7 +13,7 @@ import spray.json.{DefaultJsonProtocol, NullOptions}
 import scala.concurrent.Future
 
 object BackendJsonProtocol extends DefaultJsonProtocol with NullOptions {
-  implicit val backendPaymentFormat = jsonFormat2(BackendPayment)
+  implicit val backendPaymentFormat = jsonFormat3(BackendPayment)
   implicit val backendInvoiceFormat = jsonFormat2(BackendInvoice)
 }
 
