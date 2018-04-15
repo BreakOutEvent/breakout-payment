@@ -9,6 +9,12 @@ object Style extends StyleSheet {
   val valid = cls(
     color.green
   )
+  val validNew = cls(
+    color.blue
+  )
+  val invalidUnknown = cls(
+    color.teal
+  )
   val invalid = cls(
     color.red
   )

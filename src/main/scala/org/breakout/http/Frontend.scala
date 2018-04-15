@@ -9,19 +9,16 @@ import org.breakout.UsageEnvironment._
 import org.breakout.connector.backend.{BackendApi, BackendPayment}
 import org.breakout.connector.fidor.{FidorApi, FidorOAuthServer, FidorTransaction}
 import org.breakout.http.html.Html
-import org.breakout.logic.CheckPaidLogic.log
+import org.breakout.util.IntUtils._
+import org.breakout.util.StringUtils._
 import org.http4s._
 import org.http4s.dsl.{->, GET, Ok, Root, _}
-import org.http4s.headers.Location
 import org.http4s.server.Server
 import org.http4s.server.blaze.BlazeBuilder
+import scalatags.Text
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import scalatags.Text
-import org.breakout.util.IntUtils._
-import org.breakout.util.StringUtils._
-
 
 object Frontend {
 
@@ -33,25 +30,29 @@ object Frontend {
   val fidorApi = new FidorApi(WEB_FRONTEND)
 
   def transactions: Future[Text.TypedTag[String]] =
-    fidorApi.getAllTransactions.map { transactions: Seq[FidorTransaction] =>
-      Html.htmlWrapper(Html.transactionsPage(transactions))
+    BackendApi.getAllPayments.flatMap { backendPayments: Seq[BackendPayment] =>
+      fidorApi.getAllTransactions.map { transactions: Seq[FidorTransaction] =>
+        Html.htmlWrapper(Html.transactionsPage(transactions, backendPayments))
+      }
     }
 
   def transfer: Future[Text.TypedTag[String]] =
-    fidorApi.getAllTransactions.flatMap { transactions: Seq[FidorTransaction] =>
-      val withCorrectSubject = transactions.filter(_.subject.hasValidSubject)
+    BackendApi.getAllPayments.flatMap { backendPayments: Seq[BackendPayment] =>
+      fidorApi.getAllTransactions.flatMap { transactions: Seq[FidorTransaction] =>
+        val withCorrectSubject = transactions.filter(_.subject.hasValidSubject)
 
-      Future.sequence(withCorrectSubject.map { transaction =>
-        BackendApi.addPayment(
-          transaction.subject.getSubjectCode,
-          BackendPayment(transaction.amount.toDecimalAmount, transaction.id.toLong, transaction.booking_date.flatMap(_.toUtcLong))
-        ) map { invoice =>
-          log.info(s"SUCCESS: inserted payment to backend invoice $invoice")
-        } recover { case e: Throwable =>
-          log.error(s"backend rejected, maybe already inserted: ${transaction.amount.toDecimalAmount}€ as ${transaction.subject} from ${transaction.transaction_type_details.remote_name} (${transaction.transaction_type_details.remote_iban}) on ${transaction.value_date.getOrElse("")}; fidor id: ${transaction.id}")
+        Future.sequence(withCorrectSubject.map { transaction =>
+          BackendApi.addPayment(
+            transaction.subject.getSubjectCode,
+            BackendPayment(transaction.amount.toDecimalAmount, transaction.id.toLong, transaction.booking_date.flatMap(_.toUtcLong))
+          ) map { invoice =>
+            log.info(s"SUCCESS: inserted payment to backend invoice $invoice")
+          } recover { case e: Throwable =>
+            log.error(s"backend rejected, maybe already inserted: ${transaction.amount.toDecimalAmount}€ as ${transaction.subject} from ${transaction.transaction_type_details.remote_name} (${transaction.transaction_type_details.remote_iban}) on ${transaction.value_date.getOrElse("")}; fidor id: ${transaction.id}")
+          }
+        }) map { _ =>
+          Html.htmlWrapper(Html.transactionsPage(withCorrectSubject, backendPayments))
         }
-      }) map { _ =>
-        Html.htmlWrapper(Html.transactionsPage(withCorrectSubject))
       }
     }
 

@@ -4,7 +4,7 @@ import akka.actor.ActorSystem
 import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.Logger
 import org.breakout.connector.HttpConnection._
-import org.breakout.connector.backend.BackendRoutes.ADD_PAYMENT
+import org.breakout.connector.backend.BackendRoutes._
 import spray.client.pipelining._
 import spray.http._
 import spray.httpx.SprayJsonSupport._
@@ -26,6 +26,8 @@ object BackendRoutes {
 
   def ADD_PAYMENT(purposeOfTransferCode: String): BackendRoute =
     BackendRoute(s"$baseUrl/invoice/payment/$purposeOfTransferCode/")
+
+  def GET_ALL_PAYMENTS: BackendRoute = BackendRoute(s"$baseUrl/invoice/payment/")
 }
 
 object BackendApi {
@@ -36,7 +38,6 @@ object BackendApi {
   private implicit val system = ActorSystem()
 
   import BackendJsonProtocol._
-  import system.dispatcher
 
   private val backendPipeline = (
     addHeader("X-AUTH-TOKEN", authToken)
@@ -50,6 +51,12 @@ object BackendApi {
     log.debug(s"adding Payment $purposeOfTransferCode; $payment")
     val pipeline = backendPipeline ~> unmarshal[BackendInvoice]
     pipeline(Post(ADD_PAYMENT(purposeOfTransferCode).url, payment))
+  }
+
+  def getAllPayments: Future[Seq[BackendPayment]] = {
+    log.debug("getting all payments")
+    val pipeline = backendPipeline ~> unmarshal[Seq[BackendPayment]]
+    pipeline(Get(GET_ALL_PAYMENTS.url))
   }
 
 }
