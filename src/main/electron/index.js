@@ -1,12 +1,13 @@
 const {app, BrowserWindow} = require('electron');
-const path = require('path');
-const url = require('url');
+const kill = require('tree-kill');
+const childProcess = require('child_process');
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let win;
+let serverProcess;
 
-//https://github.com/cuba-labs/java-electron-tutorial
+// https://github.com/cuba-labs/java-electron-tutorial
 
 let env = process.env;
 env.FIDOR_URL = 'https://aps.fidor.de';
@@ -19,14 +20,14 @@ env.BACKEND_AUTH_TOKEN = '123';
 let appPath = "/bin/breakout-payment-assembly-1.1.0.jar";
 
 if (process.platform === 'win32') {
-    serverProcess = require('child_process')
+    serverProcess = childProcess
         .spawn('cmd.exe', ['/c', 'demo.bat'],
             {
                 cwd: 'java',
                 args: ['-jar', app.getAppPath() + appPath]
             });
 } else {
-    serverProcess = require('child_process')
+    serverProcess = childProcess
         .spawn('java', ['-jar', app.getAppPath() + appPath], {env: env});
 
     serverProcess.stdout.on('data', function (data) {
@@ -43,20 +44,23 @@ let appUrl = 'http://localhost:1337';
 
 function createWindow() {
     // Create the browser window.
-    win = new BrowserWindow({width: 800, height: 600});
+    win = new BrowserWindow({width: 1440, height: 900, title: "BreakOut Fidor Payment"});
+
+    // disable menubar
+    win.setMenu(null);
 
     // and load the index.html of the app.
     win.loadURL(appUrl);
 
     // Open the DevTools.
-    win.webContents.openDevTools();
+    // win.webContents.openDevTools();
 
     // Emitted when the window is closed.
     win.on('closed', () => {
         // Dereference the window object, usually you would store windows
         // in an array if your app supports multi windows, this is the time
         // when you should delete the corresponding element.
-        win = null
+        win = null;
     })
 }
 
@@ -64,20 +68,17 @@ function createWindow() {
 const startUp = function () {
     const requestPromise = require('minimal-request-promise');
 
-    requestPromise.get(appUrl).then(function (response) {
+    requestPromise.get(appUrl).then(function () {
         console.log('Server started!');
         createWindow();
-    }, function (response) {
-        //console.log('Waiting for the server start...');
+    }, function () {
+        console.log('Waiting for the server start...');
 
         setTimeout(function () {
             startUp();
         }, 200);
     });
 };
-
-startUp();
-
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
@@ -86,11 +87,11 @@ app.on('ready', startUp);
 
 // Quit when all windows are closed.
 app.on('window-all-closed', () => {
-    // On macOS it is common for applications and their menu bar
-    // to stay active until the user quits explicitly with Cmd + Q
-    if (process.platform !== 'darwin') {
-        app.quit()
-    }
+    kill(serverProcess.pid, function () {
+        console.log('Server process killed');
+        serverProcess = null;
+        app.quit();
+    });
 });
 
 app.on('activate', () => {
