@@ -6,7 +6,7 @@ import java.net.URI
 import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.Logger
 import org.breakout.UsageEnvironment._
-import org.breakout.connector.backend.{BackendApi, BackendPayment}
+import org.breakout.connector.backend.{BackendApi, BackendInvoice, BackendPayment}
 import org.breakout.connector.fidor.{FidorApi, FidorOAuthServer, FidorTransaction}
 import org.breakout.http.html.Html
 import org.breakout.util.IntUtils._
@@ -40,18 +40,23 @@ object Frontend {
     BackendApi.getAllPayments.flatMap { backendPayments: Seq[BackendPayment] =>
       fidorApi.getAllTransactions.flatMap { transactions: Seq[FidorTransaction] =>
         val withCorrectSubject = transactions.filter(_.subject.hasValidSubject)
+        val withoutAlreadyTransferred = withCorrectSubject.filterNot { transaction =>
+          backendPayments.exists(_.fidorId == transaction.id.toLong)
+        }
 
-        Future.sequence(withCorrectSubject.map { transaction =>
+        Future.sequence(withoutAlreadyTransferred.map { transaction =>
           BackendApi.addPayment(
             transaction.subject.getSubjectCode,
             BackendPayment(transaction.amount.toDecimalAmount, transaction.id.toLong, transaction.booking_date.flatMap(_.toUtcLong))
           ) map { invoice =>
             log.info(s"SUCCESS: inserted payment to backend invoice $invoice")
+            Right(transaction, invoice)
           } recover { case e: Throwable =>
-            log.error(s"backend rejected, maybe already inserted: ${transaction.amount.toDecimalAmount}€ as ${transaction.subject} from ${transaction.transaction_type_details.remote_name} (${transaction.transaction_type_details.remote_iban}) on ${transaction.value_date.getOrElse("")}; fidor id: ${transaction.id}")
+            log.error(s"backend rejected fidor id: ${transaction.id} with ${e.getMessage}")
+            Left(transaction, e)
           }
-        }) map { _ =>
-          Html.htmlWrapper(Html.transactionsPage(withCorrectSubject, backendPayments))
+        }) map { transferSummary: Seq[Either[(FidorTransaction, Throwable), (FidorTransaction, BackendInvoice)] with Product with Serializable] =>
+          Html.htmlWrapper(Html.transferredPage(transferSummary))
         }
       }
     }

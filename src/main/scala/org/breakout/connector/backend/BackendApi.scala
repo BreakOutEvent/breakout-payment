@@ -38,6 +38,7 @@ object BackendApi {
   private implicit val system = ActorSystem()
 
   import BackendJsonProtocol._
+  import system.dispatcher
 
   private val backendPipeline = (
     addHeader("X-AUTH-TOKEN", authToken)
