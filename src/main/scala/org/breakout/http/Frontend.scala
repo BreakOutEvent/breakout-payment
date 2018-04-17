@@ -73,12 +73,23 @@ object Frontend {
 
   }
 
-  private def openBrowser(uri: String) =
+  private def openBrowser(uri: String) = {
+
+    val os: String = System.getProperty("os.name").toLowerCase
+    val isWindows = os.contains("win")
+    val isLinux = os.contains("nux") || os.contains("nix")
+    val isMac = os.contains("mac")
+
     if (Desktop.isDesktopSupported) {
       Desktop.getDesktop.browse(new URI(uri))
-    } else {
+    } else if (isMac) {
+      Runtime.getRuntime.exec(s"open $uri")
+    } else if (isLinux) {
       Runtime.getRuntime.exec(s"xdg-open $uri")
+    } else if (isWindows) {
+      Runtime.getRuntime.exec(s"rundll32 url.dll,FileProtocolHandler $uri")
     }
+  }
 
   def runWebServer(): Server = {
     val uri = s"http://$url:$port/"
