@@ -28,3 +28,5 @@ target/
 
 src/main/electron/node_modules/
 src/main/electron/bin/*
+
+*.bak
