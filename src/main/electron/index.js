@@ -35,7 +35,7 @@ if (process.platform === 'win32') {
     });
 
     serverProcess.stderr.on('data', function (data) {
-        console.log(data.toString());
+        console.error(data.toString());
     });
 }
 
