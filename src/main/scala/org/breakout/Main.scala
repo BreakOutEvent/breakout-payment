@@ -1,13 +1,15 @@
 package org.breakout
 
+import akka.actor.ActorSystem
 import com.typesafe.config.ConfigFactory
 import org.breakout.DryRunOption.NO_DRY_RUN
 import org.breakout.Modes._
+import org.breakout.UsageEnvironment._
+import org.breakout.http.Frontend
 import org.breakout.logic.CheckPaidLogic
 import scopt.OptionParser
 
 object Main extends App {
-
   val config = ConfigFactory.load()
 
   val parser = new OptionParser[CmdConfig]("breakout-payment") {
@@ -25,13 +27,17 @@ object Main extends App {
       .text("checks weather payments the backend expects were received.")
   }
 
-  parser.parse(args, CmdConfig()) match {
-    case Some(cmdConfig) =>
-      cmdConfig.mode match {
-        case NONE => parser.showUsage()
-        case CHECK_PAID => CheckPaidLogic.doPaidCheck(cmdConfig)
-        case notImplementedMode => throw new RuntimeException(s"$notImplementedMode is not implemented yet!")
-      }
-    case None =>
+  parser.parse(args, CmdConfig()).foreach(cmdConfig => cmdConfig.mode match {
+    case NONE => runFrontend()
+    case CHECK_PAID => CheckPaidLogic.doPaidCheck(cmdConfig.copy(usageEnvironment = CLI))
+    case notImplementedMode => throw new RuntimeException(s"$notImplementedMode is not implemented yet!")
+  })
+
+  def runFrontend(): Unit = {
+    ActorSystem("web-frontend")
+
+    Frontend.runWebServer()
+
+
   }
 }

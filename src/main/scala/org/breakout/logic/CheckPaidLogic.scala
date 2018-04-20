@@ -16,10 +16,11 @@ object CheckPaidLogic {
 
   private val log = Logger[CheckPaidLogic.type]
 
-  def doPaidCheck(cmdConfig: CmdConfig) = {
+  def doPaidCheck(cmdConfig: CmdConfig) {
     log.info(s"Start doPaidCheck ${cmdConfig.dryRun.name}")
+    val fidorApi = new FidorApi(cmdConfig.usageEnvironment)
 
-    FidorApi.getAllTransactions onComplete {
+    fidorApi.getAllTransactions onComplete {
       case Success(transactions) =>
         val withCorrectSubject = transactions.filter(_.subject.hasValidSubject)
         val withoutCorrectSubject = transactions.filter(t => !withCorrectSubject.contains(t))
@@ -32,7 +33,7 @@ object CheckPaidLogic {
           if (!cmdConfig.dryRun.enabled) {
             BackendApi.addPayment(
               transaction.subject.getSubjectCode,
-              BackendPayment(transaction.amount.toDecimalAmount, transaction.id.toLong)
+              BackendPayment(transaction.amount.toDecimalAmount, transaction.id.toLong, transaction.booking_date.flatMap(_.toUtcLong))
             ) map { invoice =>
               log.info(s"SUCCESS: inserted payment to backend invoice $invoice")
             } recover { case _: Throwable =>

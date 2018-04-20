@@ -1,8 +1,11 @@
 package org.breakout.util
 
 import java.security.MessageDigest
+import java.time.{LocalDate, LocalDateTime, ZoneOffset}
 
 import com.typesafe.scalalogging.Logger
+
+import scala.util.Try
 
 object StringUtils {
 
@@ -30,6 +33,10 @@ object StringUtils {
         case _ => false
       }
     }
+
+    def toUtcLong: Option[Long] =
+      Try(LocalDate.parse(string).atStartOfDay().toEpochSecond(ZoneOffset.UTC)).toOption
+
   }
 
   private def getSubjectGroups(subject: String): Option[(String, String)] = {

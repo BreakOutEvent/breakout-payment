@@ -25,3 +25,8 @@ target/
 .project
 .settings/
 .cache-main
+
+src/main/electron/node_modules/
+src/main/electron/bin/*
+
+*.bak

@@ -4,7 +4,7 @@ import akka.actor.ActorSystem
 import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.Logger
 import org.breakout.connector.HttpConnection._
-import org.breakout.connector.backend.BackendRoutes.ADD_PAYMENT
+import org.breakout.connector.backend.BackendRoutes._
 import spray.client.pipelining._
 import spray.http._
 import spray.httpx.SprayJsonSupport._
@@ -13,7 +13,7 @@ import spray.json.{DefaultJsonProtocol, NullOptions}
 import scala.concurrent.Future
 
 object BackendJsonProtocol extends DefaultJsonProtocol with NullOptions {
-  implicit val backendPaymentFormat = jsonFormat2(BackendPayment)
+  implicit val backendPaymentFormat = jsonFormat3(BackendPayment)
   implicit val backendInvoiceFormat = jsonFormat2(BackendInvoice)
 }
 
@@ -26,6 +26,8 @@ object BackendRoutes {
 
   def ADD_PAYMENT(purposeOfTransferCode: String): BackendRoute =
     BackendRoute(s"$baseUrl/invoice/payment/$purposeOfTransferCode/")
+
+  def GET_ALL_PAYMENTS: BackendRoute = BackendRoute(s"$baseUrl/invoice/payment/")
 }
 
 object BackendApi {
@@ -50,6 +52,12 @@ object BackendApi {
     log.debug(s"adding Payment $purposeOfTransferCode; $payment")
     val pipeline = backendPipeline ~> unmarshal[BackendInvoice]
     pipeline(Post(ADD_PAYMENT(purposeOfTransferCode).url, payment))
+  }
+
+  def getAllPayments: Future[Seq[BackendPayment]] = {
+    log.debug("getting all payments")
+    val pipeline = backendPipeline ~> unmarshal[Seq[BackendPayment]]
+    pipeline(Get(GET_ALL_PAYMENTS.url))
   }
 
 }
