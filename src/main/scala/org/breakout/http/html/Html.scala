@@ -48,7 +48,7 @@ object Html {
 
           li(
             cls := transactionClass(transaction, matchedFromBackend).name,
-            span(cls := Style.date.name, transaction.value_date.getOrElse("").toString),
+            span(cls := Style.date.name, transaction.booking_date.getOrElse("").toString),
             span(cls := Style.subject.name, transaction.subject),
             span(cls := Style.fidorId.name, s"(${transaction.id})")
           )
@@ -66,7 +66,7 @@ object Html {
       ul(
         transferred.map { case (transaction, invoice) =>
           li(
-            span(cls := Style.date.name, transaction.value_date.getOrElse("").toString),
+            span(cls := Style.date.name, transaction.booking_date.getOrElse("").toString),
             span(cls := Style.subject.name, transaction.subject),
             span(cls := Style.fidorId.name, s"(${transaction.id})"),
             span(cls := Style.fidorId.name, s"invoice #${invoice.id}")
@@ -77,7 +77,7 @@ object Html {
       ul(
         errored.map { case (transaction, error) =>
           li(
-            span(cls := Style.date.name, transaction.value_date.getOrElse("").toString),
+            span(cls := Style.date.name, transaction.booking_date.getOrElse("").toString),
             span(cls := Style.subject.name, transaction.subject),
             span(cls := Style.fidorId.name, error.getMessage)
           )
