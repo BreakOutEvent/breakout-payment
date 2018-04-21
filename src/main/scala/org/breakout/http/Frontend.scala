@@ -47,7 +47,7 @@ object Frontend {
         Future.sequence(withoutAlreadyTransferred.map { transaction =>
           BackendApi.addPayment(
             transaction.subject.getSubjectCode,
-            BackendPayment(transaction.amount.toDecimalAmount, transaction.id.toLong, transaction.booking_date.flatMap(_.toUtcLong))
+            BackendPayment(transaction.amount.toDecimalAmount, transaction.id.toLong, transaction.value_date.flatMap(_.toUtcLong))
           ) map { invoice =>
             log.info(s"SUCCESS: inserted payment to backend invoice $invoice")
             Right(transaction, invoice)
