@@ -33,7 +33,7 @@ object CheckPaidLogic {
           if (!cmdConfig.dryRun.enabled) {
             BackendApi.addPayment(
               transaction.subject.getSubjectCode,
-              BackendPayment(transaction.amount.toDecimalAmount, transaction.id.toLong, transaction.booking_date.flatMap(_.toUtcLong))
+              BackendPayment(transaction.amount.toDecimalAmount, Some(transaction.id.toLong), transaction.booking_date.flatMap(_.toUtcLong))
             ) map { invoice =>
               log.info(s"SUCCESS: inserted payment to backend invoice $invoice")
             } recover { case _: Throwable =>

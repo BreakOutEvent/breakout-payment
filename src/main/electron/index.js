@@ -17,7 +17,7 @@ env.FIDOR_CLIENT_SECRET = '123';
 env.BACKEND_URL = 'http://localhost:8082';
 env.BACKEND_AUTH_TOKEN = '123';
 
-let appPath = "/bin/breakout-payment-assembly-1.2.0.jar";
+let appPath = "/bin/breakout-payment-assembly-1.2.1.jar";
 
 if (process.platform === 'win32') {
     serverProcess = childProcess
