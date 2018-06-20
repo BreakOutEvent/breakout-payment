@@ -9,13 +9,14 @@
     "tree-kill": "^1.2.0"
   },
   "devDependencies": {
-    "electron": "^1.8.4",
-    "electron-packager": "^12.0.1"
+    "electron": "^1.8.7",
+    "electron-packager": "^12.1.0"
   },
   "scripts": {
     "start": "electron .",
     "sbt": "mkdir -p bin && cd ../../../ && sbt assembly && cp target/scala-2.11/breakout-payment-assembly-1.2.0.jar src/main/electron/bin/breakout-payment-assembly-1.2.0.jar",
-    "package": "./node_modules/electron-packager/cli.js ."
+    "package": "./node_modules/electron-packager/cli.js --overwrite .",
+    "full-build": "npm run sbt && npm run package"
   },
   "author": "",
   "license": "AGPL-3.0"

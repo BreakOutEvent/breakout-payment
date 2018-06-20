@@ -24,7 +24,8 @@ if (process.platform === 'win32') {
         .spawn('cmd.exe', ['/c', 'demo.bat'],
             {
                 cwd: 'java',
-                args: ['-jar', app.getAppPath() + appPath]
+                args: ['-jar', app.getAppPath() + appPath],
+                env: env
             });
 } else {
     serverProcess = childProcess
@@ -44,7 +45,14 @@ let appUrl = 'http://localhost:1337';
 
 function createWindow() {
     // Create the browser window.
-    win = new BrowserWindow({width: 1440, height: 900, title: "BreakOut Fidor Payment"});
+    win = new BrowserWindow({
+        width: 1440,
+        height: 900,
+        title: "BreakOut Fidor Payment",
+        webPreferences: {
+            nodeIntegration: false
+        }
+    });
 
     // disable menubar
     win.setMenu(null);
