@@ -41,7 +41,7 @@ object Frontend {
       fidorApi.getAllTransactions.flatMap { transactions: Seq[FidorTransaction] =>
         val withCorrectSubject = transactions.filter(_.subject.hasValidSubject)
         val withoutAlreadyTransferred = withCorrectSubject.filterNot { transaction =>
-          backendPayments.exists(_.fidorId == transaction.id.toLong)
+          backendPayments.exists(_.fidorId.contains(transaction.id.toLong))
         }
 
         Future.sequence(withoutAlreadyTransferred.map { transaction =>
