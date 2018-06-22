@@ -33,11 +33,11 @@ object CheckPaidLogic {
           if (!cmdConfig.dryRun.enabled) {
             BackendApi.addPayment(
               transaction.subject.getSubjectCode,
-              BackendPayment(transaction.amount.toDecimalAmount, Some(transaction.id.toLong), transaction.booking_date.flatMap(_.toUtcLong))
+              BackendPayment(transaction.amount.toDecimalAmount, Some(transaction.id.toLong), transaction.value_date.flatMap(_.toUtcLong))
             ) map { invoice =>
               log.info(s"SUCCESS: inserted payment to backend invoice $invoice")
             } recover { case _: Throwable =>
-              log.error(s"backend rejected, maybe already inserted: ${transaction.amount.toDecimalAmount}€ as ${transaction.subject} from ${transaction.transaction_type_details.remote_name} (${transaction.transaction_type_details.remote_iban}) on ${transaction.booking_date.getOrElse("")}; fidor id: ${transaction.id}")
+              log.error(s"backend rejected, maybe already inserted: ${transaction.amount.toDecimalAmount}€ as ${transaction.subject} from ${transaction.transaction_type_details.remote_name} (${transaction.transaction_type_details.remote_iban}) on ${transaction.value_date.getOrElse("")}; fidor id: ${transaction.id}")
             }
           } else {
             log.info("Won't insert payments to backend due to dry-running")
@@ -45,7 +45,7 @@ object CheckPaidLogic {
           }
         }) onComplete { _ =>
           withoutCorrectSubject.foreach { t =>
-            log.error(s"subject is not matching for: ${t.amount.toDecimalAmount}€ as ${t.subject} from ${t.transaction_type_details.remote_name.getOrElse("")} (${t.transaction_type_details.remote_iban.getOrElse("")}) on ${t.booking_date.getOrElse("")}; fidor id: ${t.id}")
+            log.error(s"subject is not matching for: ${t.amount.toDecimalAmount}€ as ${t.subject} from ${t.transaction_type_details.remote_name.getOrElse("")} (${t.transaction_type_details.remote_iban.getOrElse("")}) on ${t.value_date.getOrElse("")}; fidor id: ${t.id}")
           }
           System.exit(1)
         }

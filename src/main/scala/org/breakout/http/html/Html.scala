@@ -3,6 +3,7 @@ package org.breakout.http.html
 import org.breakout.connector.backend.{BackendInvoice, BackendPayment}
 import org.breakout.connector.fidor.FidorTransaction
 import org.breakout.util.StringUtils._
+import org.breakout.util.IntUtils._
 import scalatags.Text
 import scalatags.Text.all.{span, _}
 
@@ -44,12 +45,13 @@ object Html {
       a(cls := Style.backend.name, href := "/transfer", "transfer valid to backend"),
       ul(
         transactions.map { transaction =>
-          val matchedFromBackend: Option[BackendPayment] = backendPayments.find(_.fidorId == transaction.id.toLong)
+          val matchedFromBackend: Option[BackendPayment] = backendPayments.find(_.fidorId.contains(transaction.id.toLong))
 
           li(
             cls := transactionClass(transaction, matchedFromBackend).name,
-            span(cls := Style.date.name, transaction.booking_date.getOrElse("").toString),
+            span(cls := Style.date.name, transaction.value_date.getOrElse("").toString),
             span(cls := Style.subject.name, transaction.subject),
+            span(cls := Style.date.name, transaction.amount.toEuroString),
             span(cls := Style.fidorId.name, s"(${transaction.id})")
           )
         }
@@ -66,9 +68,10 @@ object Html {
       ul(
         transferred.map { case (transaction, invoice) =>
           li(
-            span(cls := Style.date.name, transaction.booking_date.getOrElse("").toString),
+            span(cls := Style.date.name, transaction.value_date.getOrElse("").toString),
             span(cls := Style.subject.name, transaction.subject),
             span(cls := Style.fidorId.name, s"(${transaction.id})"),
+            span(cls := Style.date.name, transaction.amount.toEuroString),
             span(cls := Style.fidorId.name, s"invoice #${invoice.id}")
           )
         }
@@ -77,7 +80,7 @@ object Html {
       ul(
         errored.map { case (transaction, error) =>
           li(
-            span(cls := Style.date.name, transaction.booking_date.getOrElse("").toString),
+            span(cls := Style.date.name, transaction.value_date.getOrElse("").toString),
             span(cls := Style.subject.name, transaction.subject),
             span(cls := Style.fidorId.name, error.getMessage)
           )

@@ -12,6 +12,10 @@ object IntUtils {
     def toDecimalAmount: BigDecimal = {
       (BigDecimal(int) / 100).setScale(2, RoundingMode.HALF_UP)
     }
+
+    def toEuroString: String = {
+      s"${int.toDecimalAmount} €".replace(".", ",")
+    }
   }
 
 }

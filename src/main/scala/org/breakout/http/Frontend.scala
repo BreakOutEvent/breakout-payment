@@ -46,8 +46,12 @@ object Frontend {
 
         Future.sequence(withoutAlreadyTransferred.map { transaction =>
           BackendApi.addPayment(
-            transaction.subject.getSubjectCode,
-            BackendPayment(transaction.amount.toDecimalAmount, Some(transaction.id.toLong), transaction.booking_date.flatMap(_.toUtcLong))
+            purposeOfTransferCode = transaction.subject.getSubjectCode,
+            payment = BackendPayment(
+              amount = transaction.amount.toDecimalAmount,
+              fidorId = Some(transaction.id.toLong),
+              date = transaction.value_date.flatMap(_.toUtcLong)
+            )
           ) map { invoice =>
             log.info(s"SUCCESS: inserted payment to backend invoice $invoice")
             Right(transaction, invoice)
@@ -55,7 +59,7 @@ object Frontend {
             log.error(s"backend rejected fidor id: ${transaction.id} with ${e.getMessage}")
             Left(transaction, e)
           }
-        }) map { transferSummary: Seq[Either[(FidorTransaction, Throwable), (FidorTransaction, BackendInvoice)] with Product with Serializable] =>
+        }) map { transferSummary =>
           Html.htmlWrapper(Html.transferredPage(transferSummary))
         }
       }

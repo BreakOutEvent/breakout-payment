@@ -35,7 +35,7 @@ object StringUtils {
     }
 
     def toUtcLong: Option[Long] =
-      Try(LocalDate.parse(string).atStartOfDay().toEpochSecond(ZoneOffset.UTC)).toOption
+      Try(LocalDate.parse(string.substring(0, 10)).atStartOfDay().toEpochSecond(ZoneOffset.UTC)).toOption
 
   }
 

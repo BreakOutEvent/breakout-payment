@@ -23,7 +23,8 @@ object Style extends StyleSheet {
     paddingLeft := "10px"
   )
   val subject = cls(
-    paddingLeft := "10px"
+    paddingLeft := "10px",
+    paddingRight := "10px"
   )
   val date = cls(
     color.black
