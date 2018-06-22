@@ -1,7 +1,7 @@
 {
   "name": "breakout-payment-app",
   "productName": "BreakOut Fidor Payment",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "",
   "main": "index.js",
   "dependencies": {
@@ -14,7 +14,7 @@
   },
   "scripts": {
     "start": "electron .",
-    "sbt": "mkdir -p bin && cd ../../../ && sbt assembly && cp target/scala-2.11/breakout-payment-assembly-1.2.1.jar src/main/electron/bin/breakout-payment-assembly-1.2.1.jar",
+    "sbt": "mkdir -p bin && cd ../../../ && sbt assembly && cp target/scala-2.11/breakout-payment-assembly-1.2.2.jar src/main/electron/bin/breakout-payment-assembly-1.2.2.jar",
     "package": "./node_modules/electron-packager/cli.js --overwrite .",
     "full-build": "npm run sbt && npm run package"
   },
