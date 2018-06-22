@@ -27,6 +27,7 @@ object Style extends StyleSheet {
     paddingRight := "10px"
   )
   val date = cls(
+    paddingLeft := "5px",
     color.black
   )
   val backend = cls(

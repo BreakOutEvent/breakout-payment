@@ -36,11 +36,19 @@ object Html {
         case (false, _) => Style.invalid
       }
 
+    // duplicate code, thanks quincy, i am to lazy
+    def transactionIdentifierEmoji(transaction: FidorTransaction, matchedFromBackend: Option[BackendPayment]) =
+      (transaction.subject.hasValidSubject, matchedFromBackend) match {
+        case (true, None) => "\uD83D\uDE10"
+        case (true, Some(_)) => "\uD83D\uDE0A"
+        case (false, _) => "\uD83D\uDE1F"
+      }
+
     div(
       h2("meaning:"),
-      div(cls := Style.valid.name, "already teansfered"),
-      div(cls := Style.validNew.name, "code valid, not transferred"),
-      div(cls := Style.invalid.name, "code invalid"),
+      div(cls := Style.valid.name, "\uD83D\uDE0A already teansfered"),
+      div(cls := Style.validNew.name, "\uD83D\uDE10 code valid, not transferred"),
+      div(cls := Style.invalid.name, "\uD83D\uDE1F code invalid"),
       h2("transactions:"),
       a(cls := Style.backend.name, href := "/transfer", "transfer valid to backend"),
       ul(
@@ -49,6 +57,7 @@ object Html {
 
           li(
             cls := transactionClass(transaction, matchedFromBackend).name,
+            span(transactionIdentifierEmoji(transaction, matchedFromBackend)),
             span(cls := Style.date.name, transaction.value_date.getOrElse("").toString),
             span(cls := Style.subject.name, transaction.subject),
             span(cls := Style.date.name, transaction.amount.toEuroString),
