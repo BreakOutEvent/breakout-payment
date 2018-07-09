@@ -19,6 +19,7 @@ import scalatags.Text
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import scala.concurrent.duration.Duration
 
 object Frontend {
 
@@ -102,6 +103,7 @@ object Frontend {
     //openBrowser(uri)
 
     BlazeBuilder
+      .withIdleTimeout(Duration.Inf)
       .bindHttp(port, url)
       .mountService(frontendService, "/")
       .mountService(FidorOAuthServer.oauthService(WEB_FRONTEND), FidorOAuthServer.redirectRoute)
